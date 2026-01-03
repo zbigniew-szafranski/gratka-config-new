@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -300,7 +301,7 @@
 
     <script>
         // ZMIEŃ TO NA SWÓJ WEBHOOK URL!
-        const WEBHOOK_URL = 'https://primary-production-7c5f5.up.railway.app/webhook-test/gratka-config-new';
+        const WEBHOOK_URL = 'https://primary-production-7c5f5.up.railway.app/webhook-test/gratka-config';
         
         // Załaduj obecną konfigurację przy starcie
         async function loadCurrentConfig() {
@@ -328,33 +329,45 @@
             submitBtn.innerHTML = '💾 Zapisywanie... <span class="loader"></span>';
             
             const formData = new FormData(e.target);
-            
-            // Konwertuj dane formularza na format URLSearchParams
             const data = {
                 lokalizacja: formData.get('lokalizacja'),
-                cena_min: formData.get('cena_min'),
-                cena_max: formData.get('cena_max'),
-                metraz_min: formData.get('metraz_min') || '',
-                metraz_max: formData.get('metraz_max') || '',
-                balkon: formData.get('balkon') ? 'true' : 'false',
-                garaz: formData.get('garaz') ? 'true' : 'false',
-                piwnica: formData.get('piwnica') ? 'true' : 'false',
+                cena_min: parseInt(formData.get('cena_min')),
+                cena_max: parseInt(formData.get('cena_max')),
+                metraz_min: formData.get('metraz_min') ? parseInt(formData.get('metraz_min')) : null,
+                metraz_max: formData.get('metraz_max') ? parseInt(formData.get('metraz_max')) : null,
+                balkon: formData.get('balkon') === 'on',
+                garaz: formData.get('garaz') === 'on',
+                piwnica: formData.get('piwnica') === 'on',
                 email: formData.get('email')
             };
-        
+
             try {
-                // ← TO JEST ZMIANA: application/x-www-form-urlencoded zamiast JSON
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'  // ← Ominięcie CORS preflight
+                        'Content-Type': 'application/json',
                     },
-                    body: new URLSearchParams(data).toString()  // ← Nie JSON.stringify()
+                    body: JSON.stringify(data)
                 });
-        
+
                 if (response.ok) {
                     const result = await response.json();
                     successMessage.style.display = 'block';
+                    
+                    // Update current config display
+                    const configDetails = document.getElementById('configDetails');
+                    configDetails.innerHTML = `
+                        <p>📍 <strong>Lokalizacja:</strong> ${data.lokalizacja}</p>
+                        <p>💰 <strong>Cena:</strong> ${data.cena_min.toLocaleString()} - ${data.cena_max.toLocaleString()} PLN</p>
+                        ${data.metraz_min ? `<p>📏 <strong>Metraż:</strong> ${data.metraz_min} - ${data.metraz_max || '∞'} m²</p>` : ''}
+                        <p>🏡 <strong>Balkon:</strong> ${data.balkon ? 'Tak' : 'Nie'}</p>
+                        <p>🚗 <strong>Garaż:</strong> ${data.garaz ? 'Tak' : 'Nie'}</p>
+                        <p>? <strong>Piwnica:</strong> ${data.piwnica ? 'Tak' : 'Nie'}</p>
+                        <p>📧 <strong>Email:</strong> ${data.email}</p>
+                    `;
+                    document.getElementById('currentConfig').style.display = 'block';
+                    
+                    // Scroll to success message
                     successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     
                     setTimeout(() => {
