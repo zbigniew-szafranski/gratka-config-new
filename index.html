@@ -341,12 +341,25 @@
             };
 
             try {
+                // Konwertuj booleans na strings dla URLSearchParams
+                const formData = {
+                    lokalizacja: data.lokalizacja,
+                    cena_min: data.cena_min,
+                    cena_max: data.cena_max,
+                    metraz_min: data.metraz_min || '',
+                    metraz_max: data.metraz_max || '',
+                    balkon: data.balkon ? 'true' : 'false',
+                    garaz: data.garaz ? 'true' : 'false',
+                    piwnica: data.piwnica ? 'true' : 'false',
+                    email: data.email
+                };
+                
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded'  // ← Simple request, NO preflight!
                     },
-                    body: JSON.stringify(data)
+                    body: new URLSearchParams(formData).toString()
                 });
 
                 if (response.ok) {
